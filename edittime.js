@@ -1,17 +1,17 @@
 ﻿function GetPluginSettings()
 {
 	return {
-		"name":			"MyPlugin",				// as appears in 'insert object' dialog, can be changed as long as "id" stays the same
-		"id":			"MyPlugin",				// this is used to identify this plugin and is saved to the project; never change it
+		"name":			"TapsellPlus",				// as appears in 'insert object' dialog, can be changed as long as "id" stays the same
+		"id":			"TapsellPlus_Construct2_SDK",				// this is used to identify this plugin and is saved to the project; never change it
 		"version":		"1.0",					// (float in x.y format) Plugin version - C2 shows compatibility warnings based on this
-		"description":	"<appears at the bottom of the insert object dialog>",
-		"author":		"<your name/organisation>",
-		"help url":		"<your website or a manual entry on Scirra.com>",
-		"category":		"General",				// Prefer to re-use existing categories, but you can set anything here
-		"type":			"world",				// either "world" (appears in layout and is drawn), else "object"
-		"rotatable":	true,					// only used when "type" is "world".  Enables an angle property on the object.
+		"description":	"Tapsell Plus Ads SDK for Construct 2",
+		"author":		"Tapsell",
+		"help url":		"https://docs.tapsell.ir/",
+		"category":		"Ads",				// Prefer to re-use existing categories, but you can set anything here
+		"type":			"object",				// either "world" (appears in layout and is drawn), else "object"
+		"rotatable":	false,					// only used when "type" is "world".  Enables an angle property on the object.
 		"flags":		0						// uncomment lines to enable flags...
-					//	| pf_singleglobal		// exists project-wide, e.g. mouse, keyboard.  "type" must be "object".
+						| pf_singleglobal		// exists project-wide, e.g. mouse, keyboard.  "type" must be "object".
 					//	| pf_texture			// object has a single texture (e.g. tiled background)
 					//	| pf_position_aces		// compare/set/get x, y...
 					//	| pf_size_aces			// compare/set/get width, height...
@@ -55,8 +55,18 @@
 //				script_name);		// corresponding runtime function name
 				
 // example				
-AddNumberParam("Number", "Enter a number to test if positive.");
-AddCondition(0, cf_none, "Is number positive", "My category", "{0} is positive", "Description for my condition!", "MyCondition");
+AddStringParam("Zone Id", "Id of zone for which ad is available.");
+AddCondition(0, cf_trigger, "Request native response", "Tapsell Plus",
+	"If ad is available for zone {0}", "Native ad is available",
+	"request_native_response");
+
+AddStringParam("Zone Id", "Id of zone for which ad is available.");
+AddCondition(1, cf_trigger, "Request response", "Tapsell Plus", 
+	"If ad is available for zone {0}", "Ad is available", "request_response");
+
+AddStringParam("Zone Id", "Id of zone for which ad is available.");
+AddCondition(2, cf_trigger, "Request error", "Tapsell Plus", 
+	"If request returned error for zone {0}", "On rrror", "request_error");
 
 ////////////////////////////////////////
 // Actions
@@ -70,8 +80,16 @@ AddCondition(0, cf_none, "Is number positive", "My category", "{0} is positive",
 //			 script_name);		// corresponding runtime function name
 
 // example
-AddStringParam("Message", "Enter a string to alert.");
-AddAction(0, af_none, "Alert", "My category", "Alert {0}", "Description for my action!", "MyAction");
+
+AddStringParam("Zone Id","Id of zone from tapsell dashboard")
+AddAction(0, af_none, "Request rewarded", "Tapsell Plus",
+	"Request a rewarded ad for zone with id {0}", "Request rewarded ad",
+	"request_rewarded");
+
+AddStringParam("Zone Id","Id of zone from tapsell dashboard")
+AddAction(2, af_none, "Show ad", "Tapsell Plus",
+	"Show an ad for zone with id {0}", "Show ad",
+	"show_ad");
 
 ////////////////////////////////////////
 // Expressions
@@ -85,7 +103,7 @@ AddAction(0, af_none, "Alert", "My category", "Alert {0}", "Description for my a
 //				 description);	// description in expressions panel
 
 // example
-AddExpression(0, ef_return_number, "Leet expression", "My category", "MyExpression", "Return the number 1337.");
+// AddExpression(0, ef_return_number, "Leet expression", "My category", "MyExpression", "Return the number 1337.");
 
 ////////////////////////////////////////
 ACESDone();
@@ -101,9 +119,9 @@ ACESDone();
 // new cr.Property(ept_link,		name,	link_text,		description, "firstonly")		// has no associated value; simply calls "OnPropertyChanged" on click
 
 var property_list = [
-	new cr.Property(ept_integer, 	"My property",		77,		"An example property.")
-	];
-	
+    new cr.Property(ept_text, "tapsellAppId", "", "")
+];
+
 // Called by IDE when a new object type is to be created
 function CreateIDEObjectType()
 {

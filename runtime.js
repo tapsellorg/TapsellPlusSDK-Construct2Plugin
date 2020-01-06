@@ -8,17 +8,67 @@ assert2(cr.plugins_, "cr.plugins_ not created");
 // Plugin class
 // *** CHANGE THE PLUGIN ID HERE *** - must match the "id" property in edittime.js
 //          vvvvvvvv
-cr.plugins_.MyPlugin = function(runtime)
+cr.plugins_.TapsellPlus = function(runtime)
 {
 	this.runtime = runtime;
 };
 
 (function ()
 {
+
+	/////////////////////////////////////
+	// Tapsell Plus
+	function TapsellPlus(appId)
+	{
+		this.onAdAvailable = null;
+		this.onNoAdAvailable = null;
+		this.onError = null;
+		this.onNoNetwork = null;
+		this.onExpiring = null;
+		this.onOpened = null;
+		this.onClosed = null;
+		this.onAdShowFinished = null;
+		this.onAdShowCanceled = null;
+		
+		this.zone_to_adId_map = {};
+
+		this.appId = appId;
+		
+		var self = this;
+		window['tapsellPlus']['initialize'](this.appId);
+	};
+	
+	TapsellPlus.prototype.requestRewarded = function(zoneId)
+	{
+		console.log('TapsellPlus requestRewarded' + zoneId )
+		var self = this;
+		window['tapsellPlus']['requestRewarded'](zoneId, function(result){
+			if(result['action']=='response')
+			{
+				console.log('TapsellPlus response');
+				var zoneId = result['zoneId']; 
+				self.response(zoneId);
+			}
+			else if( result['action']=='error' )
+			{
+				console.log('TapsellPlus error');
+				var zoneId = result['zoneId'];
+				var message = result['message']; // description of error
+				self.error(zoneId, message);
+			}
+		});
+	}
+
+	TapsellPlus.prototype.showAd = function(zoneId)
+	{
+		console.log('TapsellPlus showAd' + zoneId)
+	
+		window['tapsellPlus']['showAd'](zoneId);
+	}
 	/////////////////////////////////////
 	// *** CHANGE THE PLUGIN ID HERE *** - must match the "id" property in edittime.js
 	//                            vvvvvvvv
-	var pluginProto = cr.plugins_.MyPlugin.prototype;
+	var pluginProto = cr.plugins_.TapsellPlus.prototype;
 		
 	/////////////////////////////////////
 	// Object type class
@@ -33,6 +83,22 @@ cr.plugins_.MyPlugin = function(runtime)
 	// called on startup for each object type
 	typeProto.onCreate = function()
 	{
+		if(this.runtime.isBlackberry10 || this.runtime.isWindows8App || this.runtime.isWindowsPhone8 || this.runtime.isWindowsPhone81){
+		var scripts=document.getElementsByTagName("script");
+		var scriptExist=false;
+		for(var i=0;i<scripts.length;i++){
+			if(scripts[i].src.indexOf("cordova.js")!=-1||scripts[i].src.indexOf("phonegap.js")!=-1){
+				scriptExist=true;
+				break;
+			}
+		}
+		if(!scriptExist){
+			var newScriptTag=document.createElement("script");
+			newScriptTag.setAttribute("type","text/javascript");
+			newScriptTag.setAttribute("src", "cordova.js");
+			document.getElementsByTagName("head")[0].appendChild(newScriptTag);
+		}
+	}
 	};
 
 	/////////////////////////////////////
@@ -54,6 +120,29 @@ cr.plugins_.MyPlugin = function(runtime)
 		// note the object is sealed after this call; ensure any properties you'll ever need are set on the object
 		// e.g...
 		// this.myValue = 0;
+		
+		this.appId = this.properties[0];
+
+		this.tapsellplus_instance = null;
+		
+		this.tapsellplus_instance = new TapsellPlus(this.appId);
+		
+		var self = this;
+		
+		if (this.tapsellplus_instance)
+		{
+			this.response = null;
+			this.error = null;
+		
+			this.tapsellplus_instance.response = function (zone)
+			{
+				self.runtime.trigger(cr.plugins_.TapsellPlus.prototype.cnds.response, self);
+			};
+			this.tapsell_instance.error = function ()
+			{
+				self.runtime.trigger(cr.plugins_.TapsellPlus.prototype.cnds.error, self);
+			};			
+		}	
 	};
 	
 	// called whenever an instance is destroyed
@@ -136,46 +225,37 @@ cr.plugins_.MyPlugin = function(runtime)
 	// Conditions
 	function Cnds() {};
 
-	// the example condition
-	Cnds.prototype.MyCondition = function (myparam)
+	Cnds.prototype.reponse = function ()
 	{
-		// return true if number is positive
-		return myparam >= 0;
+		return true;
 	};
-	
-	// ... other conditions here ...
-	
+
+	Cnds.prototype.error = function ()
+	{
+		return true;
+	};
+		
 	pluginProto.cnds = new Cnds();
 	
 	//////////////////////////////////////
 	// Actions
 	function Acts() {};
 
-	// the example action
-	Acts.prototype.MyAction = function (myparam)
+	Acts.prototype.requestRewarded = function (zoneId)
 	{
-		// alert the message
-		alert(myparam);
+		this.tapsellplus_instance.requestRewarded(zoneId);
 	};
-	
-	// ... other actions here ...
+
+	Acts.prototype.showAd = function(zoneId)
+	{
+		this.tapsellplus_instance.showAd(zoneId);
+	}
 	
 	pluginProto.acts = new Acts();
 	
 	//////////////////////////////////////
 	// Expressions
 	function Exps() {};
-	
-	// the example expression
-	Exps.prototype.MyExpression = function (ret)	// 'ret' must always be the first parameter - always return the expression's result through it!
-	{
-		ret.set_int(1337);				// return our value
-		// ret.set_float(0.5);			// for returning floats
-		// ret.set_string("Hello");		// for ef_return_string
-		// ret.set_any("woo");			// for ef_return_any, accepts either a number or string
-	};
-	
-	// ... other expressions here ...
 	
 	pluginProto.exps = new Exps();
 
