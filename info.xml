@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<c2addon>
+	<!-- One of: plugin, behavior, effect -->
+	<type>plugin</type>
+	<name>Tapsell Plus</name>	
+	<version>0.1</version>
+	<author>Tapsell</author>
+	<website>http://www.tapsell.ir</website>
+	<documentation>https://docs.tapsell.ir/</documentation>
+	<description>Tapsell Plus in Construct 2</description>
+</c2addon>
